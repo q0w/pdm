@@ -17,7 +17,7 @@ from typing import (
 )
 
 from packaging.version import parse as parse_version
-from pip._vendor.html5lib import parse
+from selectolax.parser import HTMLParser
 
 from pdm import termui
 from pdm._types import CandidateInfo, Package, SearchResult, Source
@@ -324,22 +324,26 @@ class PyPIRepository(BaseRepository):
                     f"{self.DEFAULT_INDEX_URL}/search", params={"q": query}
                 )
             resp.raise_for_status()
-            content = parse(resp.content, namespaceHTMLElements=False)
+            parser = HTMLParser(resp.content)
 
-        for result in content.findall(".//*[@class='package-snippet']"):
-            name = result.find("h3/*[@class='package-snippet__name']").text
-            version = result.find("h3/*[@class='package-snippet__version']").text
-
+        for node in parser.css("a.package-snippet"):
+            name = (
+                node.css_first("h3.package-snippet__title")
+                .css_first("span.package-snippet__name")
+                .text(strip=True)
+            )
+            version = (
+                node.css_first("h3.package-snippet__title")
+                .css_first("span.package-snippet__version")
+                .text(strip=True)
+            )
+            description = (
+                node.css_first("p.package-snippet__description").text(strip=True) or ""
+            )
             if not name or not version:
                 continue
-
-            description = result.find("p[@class='package-snippet__description']").text
-            if not description:
-                description = ""
-
             result = Package(name, version, description)
             results.append(result)
-
         return results
 
 
