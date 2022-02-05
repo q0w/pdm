@@ -25,6 +25,7 @@ dependencies = [
     "tomlkit>=0.8.0,<1",
     "typing-extensions; python_version < \"3.8\"",
     "wheel>=0.36.2",
+    "selectolax>=0.3.6",
 ]
 name = "pdm"
 description = "Python Development Master"
